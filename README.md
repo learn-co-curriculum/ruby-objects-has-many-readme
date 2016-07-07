@@ -10,15 +10,16 @@
 
 We know that the programs we write are meant to model real-world environments. This is because the programs we write are designed to carry out real-world jobs and solve real-world problems. Whether you're creating an app that connects users around the world in some kind of social network or writing a program for a major university that manages their course offerings and students, your code will need to be able to realistically map the relationships between different entities.
 
-We already know about the "belongs to" relationship. Let's say we have a `Song` class that produces individual song objects. Each song belongs to the artist that wrote it. We can build that relationship by creating an `attr_accessor` in the `Song` class for `artist`:
+We already know about the "belongs to" relationship. Let's say we have a `Song` class that produces individual song objects. Each song belongs to the artist that wrote it. We can build that relationship by creating an `attr_accessor` in the `Song` class for `artist` and allowing for a song to be initialized with an artist:
 
 ```ruby
 class Song
   attr_accessor :artist, :name, :genre
 
-  def initialize(name, genre)
+  def initialize(name, genre = nil, artist = nil)
     @name = name
     @genre = genre
+    @artist = artist
   end
 end
 ```
@@ -57,67 +58,58 @@ Let's take a closer look.
 
 ## The "has many" Relationship
 
-How can we represent an object's "having many" of something? Well, having many of something means you own a collection of that thing. Ruby offers us a great way to store collections of data in list form: arrays.
-
-We would like to be able to call:
-
-```ruby
-jay_z.songs
-```
-
-And have returned to us a list, or array, of the songs that Jay-Z has written. A given artist should start, or be initialized, with a songs collection that is empty. Later, we will write a method that adds songs to that collection.
-
-### Initializing with an empty collection
+How can we represent an object's "having many" of something? One option is to store every song an artist has within an array. It would look something like this:
 
 ```ruby
 class Artist
-  attr_accessor :name
-
-  def initialize(name)
-    @name = name
-    @songs = []
-  end
-end
-```
-
-Here we set an instance variable, `@songs`, equal to an empty array. Recall that we use instance variables to store the attributes of a given instance of a class. This instance variable is set equal to an empty array because our artist doesn't have any songs yet.
-
-Let's write the method that will allow us to add some.
-
-### Adding items to the collection
-
-Whose responsibility is it to add a new song to a given artist's collection? Well, at what point in time does an artist add another song to his or her repertoire? When that artist writes a new song. Consequently, it isn't the song's responsibility to add itself to the artist's collection of songs, it is the artist's responsibility to add a new song to their collection.
-
-That's why we'll write the method that adds songs to an artist's collection in the `Artist` class:
-
-```ruby
-class Artist
-  attr_accessor :name
+  attr_accessor :songs, :name
 
   def initialize(name)
     @name = name
     @songs = []
   end
 
-  def add_song(song)
-    @songs << song
-  end
 end
 ```
 
-Now we can execute the following code:
+Now when we initialize a new artist, they start off with an empty collection of songs. The issue with this method though is that whenever you add an artist to a song, you _also_ have to go and duplicate this information by adding a song to its artist like this:
 
 ```ruby
+ninetynine_problems = Song.new("99 Problems")
 jay_z = Artist.new("Jay-Z")
-jay_z.add_song("99 Problems")
-jay_z.add_song("Crazy in Love")
+
+ninetynine_problems.artist = jay_z
+jay_z.songs << ninetynine_problems
 ```
 
-Now we need a method that will allow a given artist to show us all of the songs in their collection. Let's do it.
+So now we end up with duplicate data. While this isn't so bad right now with just Songs and Artists, this can quickly get out of hand. Think about it, now if you want to remove the song `ninetynine_problems` from your library (or you `@@all` array in the Song class), you have to _also_ know to go remove it from Jay Z's `@songs` instance variable. There must be a better way!
 
-### Exposing the Collection
+I know! An artist could _search_ through all the songs to find the songs that belong to them! This way, we would only have to store each song with an instance variable `@artist` set equal to the artist object.
 
-Let's write an instance method, `#songs`, that we can call on an individual artist to return the list of songs that artist has.
+![seraching](http://i.giphy.com/3orif4omu38hZIdEGY.gif "Searching through a collection")
+
+To do this of course, we'll need to have all of our songs in one place so artists can search them later. First let's set up our Song class with an `@@all` class variable and a getter method for for that array to accommodate that:
+
+```ruby
+class Song
+  attr_accessor :artist, :name, :genre
+
+  @@all = []
+
+  def self.all
+    @@all
+  end
+
+  def initialize(name, genre = nil, artist = nil)
+    @name = name
+    @genre = genre
+    @artist = artist
+    @@all << self
+  end
+end
+```
+
+Now every time we create a new song, it will get added to the class variable `@@all` array so ALL songs are now stored in one _searchable_ place. If an artist wants to find their songs, they would just have to search through all the songs to find the ones that belong to them. So if I'm searching through a collection and I want to return an array of all objects matching a certain rule (`song.artist == my_artist`), then I think `#select` is the enumerator for us to use! Let's see what that would look like:
 
 ```ruby
 class Artist
@@ -125,143 +117,86 @@ class Artist
 
   def initialize(name)
     @name = name
-    @songs = []
-  end
-
-  def add_song(song)
-    @songs << song
   end
 
   def songs
-    @songs
+    Song.all.select { | song | song.artist == self}
   end
 end
 ```
 
-The `#songs` method simply return the `@songs` array, which contains the list of songs that the artist has many of.
-
-Let's try it out:
+Now we can execute the following lines of code:
 
 ```ruby
-jay_z.songs
-  # => ["99 Problems", "Crazy in Love"]
+jay_z = Artist.new("Jay Z")
+aesop_rock = Artist.new("Aesop Rock")
+empire_state_of_mind = Song.new("Empire State of Mind", "rap", jay_z)
+lotta_years = Song.new("Lotta Years", "rap", aesop_rock)
+none_shall_pass = Song.new("None Shall Pass", "pop", aesop_rock)
+
+jay_z.songs[0].name
+#=> "Empire State of Mind"
+aesop_rock.songs.count
+#=> 2
 ```
+
+So just by adding our artist object to our songs, our artists can now find all of their songs!
+
+As we can see, it can become somewhat tedious to keep having to call `Song.new` and pass in both our new song's name as a string and our new songs artist as an artist object. It would be really nice if our artist could just create the song. Maybe something like an `#add_song` method?
+
+```ruby
+class Artist
+  attr_accessor :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def add_song(song_name, genere_name)
+    Song.new(song_name, genere_name, self)
+  end
+
+  def songs
+    Song.all.select { | song | song.artist == self}
+  end
+end
+```
+
+Ahh, much better! Now our artists can create their own songs with just a string for a name and a genre.
 
 ### Relating Objects with "belongs to" and "has many"
 
-"Wow, those look like interesting songs," you might be thinking. "I wonder what kind of music Jay-Z makes." Well, let's ask `jay_z` to tell us the genres of the songs he has many of.
-
-Oh no! We can't do that because `jay_z`'s songs are simply a list of strings. We can't ask a plain old string what genre it has, it will have no idea what we are talking about.
-
-This is the limitation of one-sided relationships. Just like associating a given song to a string that contains an artist's name instead of to a real `Artist` instance had its drawbacks, so too does associating a given artist to a list of strings. With this set up, we are limited to references to a given artist's songs by their name alone. We cannot associate any further information to an artist's songs or enact any further behavior on an artist's songs.
-
-Let's fix this now. Instead of calling the `#add_song`  method with an argument of a string, let's call that method with an argument of a real song object:
+So now if a song has an artist object stored in their `@artist` instance variable, it's really easy for us to follow this association from both directions:
 
 ```ruby
-ninetynine_problems = Song.new("99 Problems", "rap")
-crazy_in_love = Song.new("Crazy in Love", "pop")
-
-jay_z.add_song(ninetynine_problems)
-jay_z.add_song(crazy_in_love)
-
+# given an artist, we can find all their songs
 jay_z.songs
-  # =>[#<Song:0x007fa96a878348 @name="99 Problems", @genre="rap">, #<Song:0x007fa96a122580 @name="Crazy in Love", @genre="pop">]
+#=> [#<Song:0x007ffc02133368 @name="Empire State of Mind", @genre="rap", @artist=#<Artist:0x007ffc01847268 @name="Jay Z">>]
+
+# given a song, we can find it's artist
+lotta_years.artist
+#=> #<Artist:0x007ffc01836288 @name="Aesop Rock">
+
+# and finally, given a song, we can find the artist and then find all that artists other songs!
+
+lotta_years.artist.songs
+#=>  => [#<Song:0x007ffc02140040 @name="Lotta Years", @genre="rap", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>, #<Song:0x007ffc030283f0 @name="None Shall Pass", @genre="rap", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>]
 ```
 
-Great, now our artist has many songs that are real, tangible `Song` instances, not just strings.
+And to do all of this, we never have to store the song data in the artist object!
 
-We can do a number of useful things with this collection of real song objects, such as iterate over them and collect their genres:
+We can also do some other useful things with this collection of real song objects, such as iterate over them and collect their genres:
 
 ```ruby
-jay_z.songs.collect do |song|
+aesop_rock.songs.collect do |song|
   song.genre
 end
   # => ["rap", "pop"]
 ```
 
-#### Object Reciprocity
-
-Now that we can ask our given artist for his songs, let's make sure that we can ask an individual song for its artist:
-
-```ruby
-crazy_in_love.artist
-  # => nil
-```
-
-Although we do have an `attr_accessor` for `artist` in our `Song` class, this particular song doesn't seem to know that it belongs to Jay-Z. That is because our `#add_song` method only accomplished associating the song object to the artist object. Our artist knows it has a collection of songs and knows how to add songs to that collection. But, we didn't tell the song that we added to the artist that it belonged to that artist.
-
-Let's fix that now. Telling a song that it belongs to an artist should happen when that song is added to the artist's `@songs` collection. Consequently, we will write the code that accomplishes this inside our `#add_song` method:
-
-```ruby
-class Artist
-  attr_accessor :name
-
-  def initialize(name)
-    @name = name
-    @songs = []
-  end
-
-  def add_song(song)
-    @songs << song
-    song.artist = self
-  end
-
-  def songs
-    @songs
-  end
-end
-```
-
-Let's take a closer look at the code in our `#add_song` method:
-
-```ruby
-def add_song(song)
-  @songs << song
-  song.artist = self
-end
-```
-
-Here, we use the `self` keyword to refer to the artist on which we are calling this method. We call the `#artist=` method on the song that is being passed in as an argument and set it equal to `self`––the artist.
-
-Let's try calling `#add_song` again:
-
-```ruby
-jay_z.add_song(crazy_in_love)
-```
-
-Now, we should be able to ask `crazy_in_love` for its artist:
-
-```ruby
-crazy_in_love.artist.name
-  # => "Jay-Z"
-```
-
-We did it! Not only does an artist have many songs, but a song belongs to an artist and we built a method that enacts those associations at the appropriate time.
-
 ## Extending the Association and Cleaning up our Code
 
 The code we have so far is pretty good. The best thing about it though, is that it accommodates future change. We've built solid associations between our `Artist` and `Song` class via our has many/belongs to code. With this foundation we can make our code even better in the following ways:
-
-### The `#add_song_by_name` Method
-
-As it currently stands, we have to *first* create a song and *then* add it to a given artists collection of songs. We are lazy programmers, if we could combine these two steps, that would make us happy. Furthermore, if you think about our domain model, i.e. the program we are writing to model the real-world environment of an artist and their songs, the current need to create a song and then add it to an artist doesn't really make sense. A song doesn't exist *before* an artist creates it.
-
-Instead, let's build a method `#add_song_by_name`, that takes in an argument of a name and genre and both creates the new song *and* adds that song to the artist's collection.
-
-```ruby
-class Artist
-  ...
-
-  def add_song_by_name(name, genre)
-    song = Song.new(name, genre)
-    @songs << song
-    song.artist = self
-  end
-```
-
-Here we use the logic of our original `#add_song` method, which adds a song to an artist's collection and tells that song that it belongs to that particular artist. But, we also create a new song using the name and genre from the arguments.
-
-This is not only neater and more elegant––now we don't have to create a new song on a separate line *every time* we want to add one to an artist––but it makes more sense.
 
 ### The `#artist_name` Method
 
@@ -270,7 +205,7 @@ Since we've already set up these great associations between instances of the `So
 Currently, to access the name of a given song's artist, we have to chain our methods like this:
 
 ```ruby
-crazy_in_love.artist.name
+empire_state_of_mind.artist.name
   # => "Jay-Z"
 ```
 
@@ -288,7 +223,7 @@ class Song
 Now we can call:
 
 ```ruby
-crazy_in_love.artist_name
+empire_state_of_mind.artist_name
   # => "Jay-Z"
 ```
 
