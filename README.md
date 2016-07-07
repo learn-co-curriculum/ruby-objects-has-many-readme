@@ -142,28 +142,6 @@ aesop_rock.songs.count
 
 So just by adding our artist object to our songs, our artists can now find all of their songs!
 
-As we can see, it can become somewhat tedious to keep having to call `Song.new` and pass in both our new song's name as a string and our new songs artist as an artist object. It would be really nice if our artist could just create the song. Maybe something like an `#add_song` method?
-
-```ruby
-class Artist
-  attr_accessor :name
-
-  def initialize(name)
-    @name = name
-  end
-
-  def add_song(song_name, genere_name)
-    Song.new(song_name, genere_name, self)
-  end
-
-  def songs
-    Song.all.select { | song | song.artist == self}
-  end
-end
-```
-
-Ahh, much better! Now our artists can create their own songs with just a string for a name and a genre.
-
 ### Relating Objects with "belongs to" and "has many"
 
 So now if a song has an artist object stored in their `@artist` instance variable, it's really easy for us to follow this association from both directions:
@@ -197,6 +175,30 @@ end
 ## Extending the Association and Cleaning up our Code
 
 The code we have so far is pretty good. The best thing about it though, is that it accommodates future change. We've built solid associations between our `Artist` and `Song` class via our has many/belongs to code. With this foundation we can make our code even better in the following ways:
+
+### The `#add_song_by_name` Method
+
+As we can see, it can become somewhat tedious to keep having to call `Song.new` and pass in both our new song's name as a string and our new songs artist as an artist object. It would be really nice if our artist could just create the song. Maybe something like an `#add_song_by_name` method?
+
+```ruby
+class Artist
+  attr_accessor :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def add_song_by_name(song_name, genere_name)
+    Song.new(song_name, genere_name, self)
+  end
+
+  def songs
+    Song.all.select { | song | song.artist == self}
+  end
+end
+```
+
+Ahh, much better! Now our artists can create their own songs with just a string for a name and a genre.
 
 ### The `#artist_name` Method
 
