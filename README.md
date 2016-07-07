@@ -232,7 +232,3 @@ Much better. Notice that we used the `self` keyword inside the `#artist_name` me
 These are only a few of the ways in which you can extend, or build on, the foundational has many and belongs to associations.
 
 <p data-visibility='hidden'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme' title='Ruby Objects: The "Has Many" Relationship'>Ruby Objects: The "Has Many" Relationship</a> on Learn.co and start learning to code for free.</p>
-
-<p data-visibility='hidden'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme'>Has Many Object</a> on Learn.co and start learning to code for free.</p>
-
-<p class='util--hide'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme'>Has Many Object</a> on Learn.co and start learning to code for free.</p>
