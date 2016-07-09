@@ -244,7 +244,7 @@ The code we have so far is pretty good. The best thing about it though, is that 
 
 ### The `#add_song_by_name` Method
 
-As it currently stands, we have to *first* create a song and *then* add it to a given artists collection of songs. We are lazy programmers, if we could combine these two steps, that would make us happy. Furthermore, if you think about our domain model, i.e. the program we are writing to model the real-world environment of an artist and their songs, the current need to create a song and then add it to an artist doesn't really make sense. A song doesn't exist *before* an artist creates it.
+As it currently stands, we have to *first* create a song and *then* add it to a given artist's collection of songs. We are lazy programmers; if we could combine these two steps, that would make us happy. Furthermore, if you think about our domain model, i.e. the program we are writing to model the real-world environment of an artist and their songs, the current need to create a song and then add it to an artist doesn't really make sense. A song doesn't exist *before* an artist creates it.
 
 Instead, let's build a method `#add_song_by_name`, that takes in an argument of a name and genre and both creates the new song *and* adds that song to the artist's collection.
 
@@ -297,7 +297,3 @@ Much better. Notice that we used the `self` keyword inside the `#artist_name` me
 These are only a few of the ways in which you can extend, or build on, the foundational has many and belongs to associations.
 
 <p data-visibility='hidden'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme' title='Ruby Objects: The "Has Many" Relationship'>Ruby Objects: The "Has Many" Relationship</a> on Learn.co and start learning to code for free.</p>
-
-<p data-visibility='hidden'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme'>Has Many Object</a> on Learn.co and start learning to code for free.</p>
-
-<p class='util--hide'>View <a href='https://learn.co/lessons/ruby-objects-has-many-readme'>Has Many Object</a> on Learn.co and start learning to code for free.</p>
