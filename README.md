@@ -10,16 +10,14 @@
 
 We know that the programs we write are meant to model real-world environments. This is because the programs we write are designed to carry out real-world jobs and solve real-world problems. Whether you're creating an app that connects users around the world in some kind of social network or writing a program for a major university that manages their course offerings and students, your code will need to be able to realistically map the relationships between different entities.
 
-We already know about the "belongs to" relationship. Let's say we have a `Song` class that produces individual song objects. Each song belongs to the artist that wrote it. We can build that relationship by creating an `attr_accessor` in the `Song` class for `artist` and allowing for a song to be initialized with an artist:
+We already know about the "belongs to" relationship. Let's say we have a `Song` class that produces individual song objects. Each song belongs to the artist that wrote it. We can build that relationship by creating an `attr_accessor` in the `Song` class for `artist`:
 
 ```ruby
 class Song
-  attr_accessor :artist, :name, :genre
+  attr_accessor :artist, :name
 
-  def initialize(name, genre = nil, artist = nil)
+  def initialize(name)
     @name = name
-    @genre = genre
-    @artist = artist
   end
 end
 ```
@@ -82,7 +80,7 @@ ninetynine_problems.artist = jay_z
 jay_z.songs << ninetynine_problems
 ```
 
-So now we end up with duplicate data. While this isn't so bad right now with just Songs and Artists, this can quickly get out of hand. Think about it, now if you want to remove the song `ninetynine_problems` from your library (or you `@@all` array in the Song class), you have to _also_ know to go remove it from Jay Z's `@songs` instance variable. There must be a better way!
+So now we end up with duplicate data. Every time an artist gets a new song, we have to write this information in two places, on the song AND on the artist. Think about it, now if you want to remove the song `ninetynine_problems` from your library, you have to _also_ know to go remove it from Jay Z's `@songs` instance variable. There must be a better way!
 
 I know! An artist could _search_ through all the songs to find the songs that belong to them! This way, we would only have to store each song with an instance variable `@artist` set equal to the artist object.
 
@@ -92,7 +90,7 @@ To do this of course, we'll need to have all of our songs in one place so artist
 
 ```ruby
 class Song
-  attr_accessor :artist, :name, :genre
+  attr_accessor :artist, :name
 
   @@all = []
 
@@ -100,10 +98,8 @@ class Song
     @@all
   end
 
-  def initialize(name, genre = nil, artist = nil)
+  def initialize(name)
     @name = name
-    @genre = genre
-    @artist = artist
     @@all << self
   end
 end
@@ -130,9 +126,12 @@ Now we can execute the following lines of code:
 ```ruby
 jay_z = Artist.new("Jay Z")
 aesop_rock = Artist.new("Aesop Rock")
-empire_state_of_mind = Song.new("Empire State of Mind", "rap", jay_z)
-lotta_years = Song.new("Lotta Years", "rap", aesop_rock)
-none_shall_pass = Song.new("None Shall Pass", "pop", aesop_rock)
+empire_state_of_mind = Song.new("Empire State of Mind")
+empire_state_of_mind.artist = jay_z
+lotta_years = Song.new("Lotta Years")
+lotta_years.artist = aesop_rock
+none_shall_pass = Song.new("None Shall Pass")
+none_shall_pass.artist = aesop_rock
 
 jay_z.songs[0].name
 #=> "Empire State of Mind"
@@ -158,23 +157,101 @@ lotta_years.artist
 # and finally, given a song, we can find the artist and then find all that artists other songs!
 
 lotta_years.artist.songs
-#=>  => [#<Song:0x007ffc02140040 @name="Lotta Years", @genre="rap", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>, #<Song:0x007ffc030283f0 @name="None Shall Pass", @genre="rap", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>]
+#=>  => [#<Song:0x007ffc02140040 @name="Lotta Years", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>, #<Song:0x007ffc030283f0 @name="None Shall Pass", @artist=#<Artist:0x007ffc01836288 @name="Aesop Rock">>]
 ```
 
 And to do all of this, we never have to store the song data in the artist object!
 
-We can also do some other useful things with this collection of real song objects, such as iterate over them and collect their genres:
+Now what would this look like if we want to add Genres into the mix as well? Well first we'll have to define the relationship between songs, genres, and artists. For the purpose of this readme, let's say that a song belongs to a genre and an artist has many genres _through_ it's songs. A Genre has many songs and has many artists. This feels like it makes sense because if an artist doesn't have any songs then they can't have any genres. And if Aesop Rock has a song in the 'rap' genre and a song in the 'pop' genre, then he would have the genres 'rap' and 'pop'.
+
+So lets just start simple first. We need a Genre class that has a name attribute. Because a Genre "has many" songs and a song "belongs to" a genre, we'll store the genre on the song class just like we did with artists and songs. The Genre class will also need a way to find all it's songs just like Artist had.
+
+```ruby
+class Genre
+  attr_accessor :name
+
+  def initialize(name)
+    @name = name
+  end
+
+  def songs
+    Song.all.select { | song | song.artist == self}
+  end
+end
+```
+
+And now we'll have to update our Song class to have a `@genre` as well:
+
+```ruby
+class Song
+  attr_accessor :artist, :name, :genre
+
+  ...
+end
+```
+
+Now that we have Genres added to the mix, we can do some other useful things with this collection of real song objects, such as iterate over them and collect their genres:
 
 ```ruby
 aesop_rock.songs.collect do |song|
-  song.genre
+  song.genre.name
 end
   # => ["rap", "pop"]
 ```
 
+So we could turn the code snippet above into a method on artist called `#genres` so that an artist could easily call all of their genres!
+
 ## Extending the Association and Cleaning up our Code
 
-The code we have so far is pretty good. The best thing about it though, is that it accommodates future change. We've built solid associations between our `Artist` and `Song` class via our has many/belongs to code. With this foundation we can make our code even better in the following ways:
+The code we have so far is pretty good. The best thing about it though, is that it accommodates future change. We've built solid associations between our `Artist`, `Genre` and `Song` class via our has many/belongs to code. With this foundation we can make our code even better in the following ways:
+
+## Allow Initialization of a Song with an Artist and Genre
+
+It's kind of a pain to have to create a song and then add the artist and the genre to it. It kind of feels like this could be done all in one step. Let's add some arguments to our `#initialize` method to make this work:
+
+```ruby
+class Song
+  ...
+
+  def initialize(name, artist, genre)
+    @name = name
+    @artist = artist
+    @genre = genre
+    @@all << self
+  end
+end
+```
+
+Now we can easily create our song with all the associated objects! Let's see what that looks like:
+
+```ruby
+jay_z = Artist.new("Jay Z")
+aesop_rock = Artist.new("Aesop Rock")
+
+rap = Genre.new("rap")
+pop = Genre.new("pop")
+
+empire_state_of_mind = Song.new("Empire State of Mind", jay_z, rap)
+lotta_years = Song.new("Lotta Years", aesop_rock, pop)
+none_shall_pass = Song.new("None Shall Pass", aesop_rock, rap)
+```
+
+This is a bit easier now! But I just want to see if we can make it a bit better. What if we still want the option to be able to create a song with just passing in a name as a strong? So we can change our code just a bit to accommodate this by adding some default arguments for `artist` and `genre`. Now I don't think we want to have a default artist object or a default genre object, instead let's just set these attributes to `nil`. This way it will be clear that they are not yet set:
+
+```ruby
+class Song
+  ...
+
+  def initialize(name, artist=nil, genre=nil)
+    @name = name
+    @artist = artist
+    @genre = genre
+    @@all << self
+  end
+end
+```
+
+Perfect. Now the code snippet we wrote earlier works, and so will this one!
 
 ### The `#add_song_by_name` Method
 
@@ -188,8 +265,8 @@ class Artist
     @name = name
   end
 
-  def add_song_by_name(song_name, genere_name)
-    Song.new(song_name, genere_name, self)
+  def add_song_by_name(song_name)
+    Song.new(song_name, self)
   end
 
   def songs
@@ -198,7 +275,7 @@ class Artist
 end
 ```
 
-Ahh, much better! Now our artists can create their own songs with just a string for a name and a genre.
+Ahh, much better! Now our artists can create their own songs with just a string for a name.
 
 ### The `#artist_name` Method
 
