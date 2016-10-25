@@ -168,7 +168,7 @@ jay_z.songs
   # =>[#<Song:0x007fa96a878348 @name="99 Problems", @genre="rap">, #<Song:0x007fa96a122580 @name="Crazy in Love", @genre="pop">]
 ```
 
-Great, now our artist has many songs that are real, tangible `Song` instances, not just strings.
+Great, now our artist has many songs that are real, meaty `Song` instances, not just strings.
 
 We can do a number of useful things with this collection of real song objects, such as iterate over them and collect their genres:
 
@@ -221,7 +221,7 @@ def add_song(song)
 end
 ```
 
-Here, we use the `self` keyword to refer to the artist on which we are calling this method. We call the `#artist=` method on the song that is being passed in as an argument and set it equal to `self`––the artist.
+Here, we use the `self` keyword to refer to the artist on which we are calling this method. We call the `#artist=` method on the song that is being passed in as an argument and set it equal to `self`—the artist.
 
 Let's try calling `#add_song` again:
 
@@ -261,7 +261,7 @@ class Artist
 
 Here we use the logic of our original `#add_song` method, which adds a song to an artist's collection and tells that song that it belongs to that particular artist. But, we also create a new song using the name and genre from the arguments.
 
-This is not only neater and more elegant––now we don't have to create a new song on a separate line *every time* we want to add one to an artist––but it makes more sense.
+This is not only neater and more elegant—now we don't have to create a new song on a separate line *every time* we want to add one to an artist—but it makes more sense.
 
 ### The `#artist_name` Method
 
