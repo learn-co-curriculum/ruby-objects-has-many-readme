@@ -390,9 +390,8 @@ Song.all.last.artist #=> #<Artist:0x00007ff1d90dbf38 @name="Rick Astley", @songs
 Song.all.last.artist.name #=> "Rick Astley"
 ```
 
-Now that we've got a way to get all songs, if we make sure to let every song
-know its artist, if we want to find all the songs that belong to a particular
-artist, we can just _select_ the appropriate songs:
+Now that we've got a way to get all songs, if we want to find all the songs that 
+belong to a particular artist, we can just _select_ the appropriate songs:
 
 ```ruby
 Song.all.select {|song| song.artist == lil_nas_x}
@@ -403,7 +402,7 @@ Song.all.select {|song| song.artist == rick}
 ```
 
 So, with `Song.all`, if we have an `Artist` instance like `lil_nas_x` or `rick`,
-we can retrieve all the songs associated with an artist. We can incorporate this
+we can retrieve all the songs associated with that artist. We can incorporate this
 directly into our `Artist` class, replacing the implementation of the `#songs`
 method so that it _selects_ instead of returning the `@songs` instance variable:
 
@@ -420,8 +419,8 @@ end
 This is an instance method, so we can use `self` to represent the `Artist`
 instance this method is called on. This changes the rest of the class - if we
 can just get the necessary information selecting from `Song.all`, we no longer
-need the `@songs` instance variable in our `Artist` class. We can get rid of
-We can also update `#add_song` accordingly:
+need the `@songs` instance variable in our `Artist` class. We can also update 
+`#add_song` accordingly:
 
 ```ruby
 class Artist
@@ -473,7 +472,7 @@ never_gonna_give_you_up.artist #=> #<Artist:0x00007fb46a903000 @name="Rick Astle
 
 The code we have so far is pretty good. The best thing about it though is that
 it accommodates future change. We've built solid associations between our
-`Artist` and `Song` class via our has many/belongs to code. With this foundation
+`Artist` and `Song` class via our "has-many"/"belongs-to" code. With this foundation
 we can make our code even better in the following ways:
 
 ### The `#add_song_by_name` Method
@@ -496,7 +495,7 @@ class Artist
 
   def add_song_by_name(name, genre)
     song = Song.new(name, genre)
-    song.artist = self
+    add_song(song)
   end
 ```
 
@@ -506,7 +505,7 @@ artist. But, we also create a new song using the name and genre from the
 arguments.
 
 This is not only neater and more elegant––now we don't have to create a new song
-on a separate line *every time* we want to add one to an artist––but it makes
+on a separate line *every time* we want to add one to an artist––but it also makes
 more sense.
 
 ### The `#artist_name` Method
@@ -546,7 +545,7 @@ kiki.artist_name
 
 Much better. Notice that we used the `self` keyword inside the `#artist_name`
 method to refer to the instance of `Song` on which the method is being called.
-Then we call `#artist` on that song instance. This would return the `Artist`
+Then, we call `#artist` on that song instance. This would return the `Artist`
 instance associated with the song. Chaining a call to `#name` after that is
 equivalent to saying: call `#name` on the return value of `self.artist`, i.e.
 call `#name` on the artist of this song.
